@@ -34,7 +34,7 @@ unsigned char pitch = 0;
 unsigned char yaw = 0;
 unsigned char serialSyncWord = 0xFF; // Used to synchronize serial data received by GUI on PC
 
-ADF7242 Rx(7); // Instantiate ADF7242 Rx(Chip Select)
+ADF7242 Rx(10); // Instantiate ADF7242 Rx(Chip Select)
 
 void setup() {
 
