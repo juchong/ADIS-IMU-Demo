@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Analog Devices, Inc.
-//  May 2015
+//  October 2015
 //  By: Daniel H. Tatum & Juan Chong
 //  Written for the TeensyDuino Platform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,6 +177,9 @@ public:
 	// Sets SPI bit order, clock divider, and data mode
 	void configSPI();
 
+	// Read status word
+	unsigned char statusRead();
+
 	// Read register
 	unsigned char regRead(unsigned int regAddr);
 
@@ -209,6 +212,9 @@ public:
 
 	// FSK preamble configuration
 	void cfgPreamble(bool syncWordDetect, bool lockAGC, bool preambleDetect, unsigned char preambleErrors);
+
+	// Configure a basic preamble which allows 0 errors
+	void cfgBasicPreamble();
 
 	// Close SPI Transaction
 	void closeSPI();

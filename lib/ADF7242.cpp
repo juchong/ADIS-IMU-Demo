@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Analog Devices, Inc.
-//  May 2015
+//  October 2015
 //  By: Daniel H. Tatum & Juan Chong
 //  Written for the TeensyDuino Platform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +163,14 @@ void ADF7242::configSPI() {
   SPI.beginTransaction(TXSettings);
 }
 
+unsigned char ADF7242::statusRead() {
+  digitalWrite(_CS, LOW);
+  SPI.transfer(SPI_NOP);
+  unsigned char _status = SPI.transfer(SPI_NOP);
+  digitalWrite(_CS, HIGH);
+  return(_status);
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // unsigned char regRead(unsigned int regAddr)
 ////////////////////////////////////////////////////////////////////////////
@@ -255,7 +263,7 @@ void ADF7242::initFSK(unsigned char dataRate) {
   regWrite(ocl_cfg0,0x00);
   regWrite(ocl_cfg1,0x07);
   regWrite(irq1_en0, 0x00);
-  regWrite(irq1_en1, 0x00);
+  regWrite(irq1_en1, 0x08); // Enables interrupt to be triggered when valid packet is received
   regWrite(irq2_en0, 0x00);
   regWrite(irq2_en1, 0x00);
   regWrite(irq1_src0, 0xFF);
@@ -267,7 +275,7 @@ void ADF7242::initFSK(unsigned char dataRate) {
   regWrite(ocl_bw4,0x1E);
   regWrite(ocl_bws,0x00);
   regWrite(ocl_bw13,0xF0);
-  regWrite(preamble_num_validate,0x01);
+  regWrite(preamble_num_validate,0x03);
   #ifdef DEBUG
     Serial.print("Data rate-specific settings loaded: ");
   #endif
@@ -454,7 +462,7 @@ void ADF7242::syncWord(unsigned long word, unsigned char tol) {
   regWrite(sync_word0, 0x31); // hardcoded sync word
   regWrite(sync_word1, 0x7F); // hardcoded sync word
   regWrite(sync_word2, 0xAA); // hardcoded sync word
-  regWrite(sync_config, 0x10);  // hardcoded sync word tolerance
+  regWrite(sync_config, 0x10);  // hardcoded sync word tolerance (JC-Was 0x10, but should be 3 words)
   #ifdef DEBUG
     Serial.print("Sync word length read from sync_config, field sync_len: ");
     Serial.println(regRead(sync_config) & 0x1F);
@@ -620,10 +628,15 @@ void ADF7242::cfgPreamble(bool syncWordDetect, bool lockAGC, bool preambleDetect
         break;
     }
   }
+  
   #ifdef DEBUG
     Serial.print("Register fsk_preamble_config: 0x");
     Serial.println(regRead(fsk_preamble_config), HEX);
   #endif
+}
+
+void ADF7242::cfgBasicPreamble() {
+  regWrite(fsk_preamble_config, 0x2C); //Enable AGC lock after preamble lock and don't allow any errors
 }
 
 ////////////////////////////////////////////////////////////////////////////

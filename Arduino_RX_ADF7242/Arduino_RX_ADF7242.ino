@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Analog Devices, Inc.
-//  May 2015
+//  October 2015
 //  By: Daniel H. Tatum & Juan Chong
 //  Written for the TeensyDuino Platform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ void setup() {
   Rx.reset();               // Reset ADF7242 transceiver during cold start up
   Rx.idle();                // Idle ADF7242 transceiver after cold start up
 
-  // Initialize settings for GFSK/FSK and set data rate
+  // Initialize settings for GFSK/FSK
   Rx.initFSK(5);            // Data rate [ 1=50kbps, 2=62.5kbps, 3=100kbps, 4=125kbps, 5=250kbps, 6=500kbps, 7=1Mbps, 8=2Mbps ]
   Rx.setMode(0x04);         // Set operating mode to GFSK/FSK packet mode
   //Rx.initIEEE();
@@ -62,33 +62,40 @@ void setup() {
   Rx.cfgAFC(80);            // Writes AFC configuration for GFSK / FSK
   Rx.cfgPB(0x080, 0x000);   // Sets Tx/Rx packet buffer pointers
   Rx.cfgCRC(0);             // CRC - Disable automatic CRC = 1, else 0
-  //Rx.cfgPreamble(0, 0, 0, 1); // FSK preamble configuration
+  Rx.cfgBasicPreamble();    // FSK preamble configuration
   Rx.PHY_RDY();             // System calibration
-
+  Rx.receive();             // Set transceiver to receive mode
+  
   // Clear receive buffer to all 0x00
   for(int i = 0x000; i < 0x005; ++i) {
     Rx.regWrite(i, 0x00);
   }
-
-  Rx.receive();             // Set transceiver to receive mode
+  
 }
 
 void loop() {
-  // Write IMU data to serial port
+  
   #ifndef DEBUG // If NOT in DEBUG mode
+  
     Rx.receive();
-    roll = Rx.regRead(0x002);
-    pitch = Rx.regRead(0x003);
-    yaw = Rx.regRead(0x004);
-    Serial.write(roll); // Write roll data to serial connection
-    Serial.write((pitch * -1)); // Write pitch data to serial connection
-    Serial.write(yaw); // Write yaw data to serial connection
-    Serial.write(0xFF); // Write synchronization word to serial connection
+    delay(2);
+    // Only output data to the serial port if the CRC matches and data is valid
+    if((Rx.statusRead() & 0x40) == 0x40) {
+      roll = Rx.regRead(0x002);
+      pitch = Rx.regRead(0x003);
+      yaw = Rx.regRead(0x004);
+      Serial.write(roll); // Write roll data to serial connection
+      Serial.write((pitch * -1)); // Write pitch data to serial connection
+      Serial.write(yaw); // Write yaw data to serial connection
+      Serial.write(0xFF); // Write synchronization word to serial connection
+    }
+    
   #endif
 
   // Write IMU data and status to serial port
   #ifdef DEBUG // If IN DEBUG mode
     Rx.receive();
+    Serial.print(Rx.statusRead());
     Rx.dumpISB();
     for(int i = 0x000; i < 0x005; ++i) {
       int recPac = Rx.regRead(i);
@@ -99,5 +106,6 @@ void loop() {
     }
   #endif
   
-  delay(30);
+  delay(5);
+  
 }
