@@ -52,7 +52,7 @@ void setup() {
   Rx.reset();               // Reset ADF7242 transceiver during cold start up
   Rx.idle();                // Idle ADF7242 transceiver after cold start up
 
-  // Initialize settings for GFSK/FSK
+  // Initialize settings for GFSK/FSK Receiver Mode
   Rx.initFSK(5);            // Data rate [ 1=50kbps, 2=62.5kbps, 3=100kbps, 4=125kbps, 5=250kbps, 6=500kbps, 7=1Mbps, 8=2Mbps ]
   Rx.setMode(0x04);         // Set operating mode to GFSK/FSK packet mode
   //Rx.initIEEE();
@@ -70,7 +70,6 @@ void setup() {
   for(int i = 0x000; i < 0x005; ++i) {
     Rx.regWrite(i, 0x00);
   }
-  
 }
 
 void loop() {
@@ -106,6 +105,6 @@ void loop() {
     }
   #endif
   
-  delay(5);
+  delay(10);
   
 }
