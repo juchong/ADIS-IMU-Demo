@@ -19,6 +19,7 @@ int NumberOfScaleMajorDivisions; // to draw circular scales
 int NumberOfScaleMinorDivisions; // to draw circular scales
 int syncWord = 0xFF; // This must be the same sync word as the Arduino and never appear in the data (roll, pitch, yaw)
 int frameCount = 0;
+int samples = 2;
 final boolean debug = true;
 
 // Object instantiations
@@ -27,8 +28,13 @@ PImage cockpit; // Cockpit object in foreground
 PImage background; // Scenery object in background
 PImage map; // Map object on dash
 
+LowPass lowPassRoll, lowPassPitch, lowPassYaw;
+
 // Initial setup
 void setup() {
+  lowPassRoll = new LowPass(samples);
+  lowPassPitch = new LowPass(samples);
+  lowPassYaw = new LowPass(samples);
   size(width, height); // Size of GUI window on monitor in pixels
   smooth(); // Draws all geometry with smooth (anti-aliased) edges
   frameRate(30); // Frame rate to render
@@ -132,6 +138,16 @@ void serialEvent(Serial port) {
     pitch = serialBuffer[1]; // Raw pitch data from serial port
     yaw = serialBuffer[2]; // Raw yaw data from serial port
   }
+  
+  lowPassRoll.input((float)roll);
+  roll = (int)lowPassRoll.output;
+  
+  lowPassPitch.input((float)pitch);
+  pitch = (int)lowPassPitch.output;
+  
+  lowPassYaw.input((float)yaw);
+  yaw = (int)lowPassYaw.output;
+  
   rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees
   pitchScaled = -(int)( ( (float)pitch )/255*height*4 ); // Scale pitch data w.r.t. image size
   pitchDegrees = -(int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
@@ -350,4 +366,28 @@ void pitchScale() {
   }
 }
 
+class LowPass {
+    ArrayList buffer;
+    int len;
+    float output;
 
+    LowPass(int len) {
+        this.len = len;
+        buffer = new ArrayList(len);
+        for(int i = 0; i < len; i++) {
+            buffer.add(new Float(0.0));
+        }
+    }
+
+    void input(float v) {
+        buffer.add(new Float(v));
+        buffer.remove(0);
+
+        float sum = 0;
+        for(int i=0; i<buffer.size(); i++) {
+                Float fv = (Float)buffer.get(i);
+                sum += fv.floatValue();
+        }
+        output = sum / buffer.size();
+    }
+}
