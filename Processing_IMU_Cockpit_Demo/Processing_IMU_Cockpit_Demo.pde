@@ -137,8 +137,9 @@ void serialEvent(Serial port) {
     roll = serialBuffer[0]; // Raw roll data from serial port
     pitch = serialBuffer[1]; // Raw pitch data from serial port
     yaw = serialBuffer[2]; // Raw yaw data from serial port
+    println(serialBuffer);
   }
-  
+  /*
   lowPassRoll.input((float)roll);
   roll = (int)lowPassRoll.output;
   
@@ -147,13 +148,14 @@ void serialEvent(Serial port) {
   
   lowPassYaw.input((float)yaw);
   yaw = (int)lowPassYaw.output;
-  
-  rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees
-  pitchScaled = -(int)( ( (float)pitch )/255*height*4 ); // Scale pitch data w.r.t. image size
+  */
+  rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees  
+  pitchScaled = -(int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
   pitchDegrees = -(int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
-  yawScaled = (int)( ( (float)yaw )/255*width ); // Scale yaw data w.r.t. image size
-  yawDegrees = -(int)( ( ( (float)yaw )/255*360-90+180 ) ); // Scale yaw data in degrees
+  yawScaled = (int)( ( (float)yaw )/255 * width ); // Scale yaw data w.r.t. image size
+  yawDegrees = -(int)( ( ( (float)yaw )/255 * 360 + 90 ) ); // Scale yaw data in degrees
   redraw();
+  
   // For debugging
   //println(Serial.list());
   //println( "Raw Input: " + roll + " " + pitch + " " +yaw); // Uncomment for debugging
