@@ -1,13 +1,12 @@
 // Libraries to import
 import processing.serial.*; // Import the serial library for Processing
+import static javax.swing.JOptionPane.*;
 
 // Variable declarations
 int width = 1600; // Width of GUI window on monitor in pixels
 int height = 900; // Height of GUI window on monitor in pixels
 byte serialBuffer[] = new byte[4];
-int roll = 0; // Raw roll data from serial port
-int pitch = 0; // Raw pitch data from serial port
-int yaw = 0; // Raw yaw data from serial port
+int roll, pitch, yaw = 0; // Raw roll data from serial port
 int rollDegrees = 0; // Roll data in degrees
 int pitchScaled = 0; // Raw roll data from serial port
 int pitchDegrees = 0; // Pitch data in degrees
@@ -20,6 +19,8 @@ int NumberOfScaleMajorDivisions; // to draw circular scales
 int NumberOfScaleMinorDivisions; // to draw circular scales
 int syncWord = 0xFF; // This must be the same sync word as the Arduino and never appear in the data (roll, pitch, yaw)
 int frameCount = 0;
+int samples = 2;
+final boolean debug = true;
 
 // Object instantiations
 Serial port; // The serial port object
@@ -27,19 +28,24 @@ PImage cockpit; // Cockpit object in foreground
 PImage background; // Scenery object in background
 PImage map; // Map object on dash
 
+LowPass lowPassRoll, lowPassPitch, lowPassYaw;
+
 // Initial setup
 void setup() {
+  lowPassRoll = new LowPass(samples);
+  lowPassPitch = new LowPass(samples);
+  lowPassYaw = new LowPass(samples);
   size(width, height); // Size of GUI window on monitor in pixels
   smooth(); // Draws all geometry with smooth (anti-aliased) edges
   frameRate(30); // Frame rate to render
   // Using the first available port (might be different on your computer)
-  port = new Serial(this, Serial.list()[1], 9600); // Make sure this part agrees with the port listed in the PC and settings in Arduino Code
+  //port = new Serial(this, Serial.list()[2], 9600); // Make sure this part agrees with the port listed in the PC and settings in Arduino Code
   background = loadImage("boundless-horizon-2.jpg"); // Load background image
   cockpit = loadImage("Cockpit.png"); // Load cockpit image
   map = loadImage("Map.png"); // Load map image
-  port.bufferUntil(syncWord); // Loads buffer stopping at the syncWord from the Arduino
   noLoop();
   rectMode(CENTER); // for instrumentation
+  serialSetup();
 }
 
 // Draw loop
@@ -58,7 +64,7 @@ void draw() {
     scale((float)width/(float)cockpit.width);
     //Map
     pushMatrix();
-      translate(425, 11);
+      translate(425,11);//425,11 (1600x900) - 588,66 (1280x800)
       //tint(255, 127); // helps to center the map
       pushMatrix(); // Built-in function that saves the current position of the coordinate system
         translate(width/2, height/2);
@@ -70,7 +76,7 @@ void draw() {
     popMatrix(); // Restores the coordinate system to the way it was before the translate
     // Artificial Horizon
     pushMatrix();
-      translate(width/5.7, height/2.0); 
+      translate(width/5.7, height/2.0); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
       Horizon();
       pushMatrix();
         rotate(radians(rollDegrees));
@@ -91,6 +97,39 @@ void draw() {
     
 }
 
+void serialSetup() {
+  String COMx, COMlist = "";
+  if(debug) printArray(Serial.list());
+    int i = Serial.list().length;
+  if (i != 0) {
+    if (i >= 2) {
+      // need to check which port the inst uses -
+      // for now we'll just let the user decide
+      for (int j = 0; j < i;) {
+        COMlist += char(j+'a') + " = " + Serial.list()[j];
+        if (++j < i) COMlist += ",  ";
+      }
+      COMx = showInputDialog("Which port is the demo connected to? (a,b,..):\n"+"Check the Device Manager if unsure!\n"+COMlist);
+      if ((COMx == null) || (COMx.isEmpty())) {
+        showMessageDialog(frame,"Port is not available!\nIt may be in use by another program or nothing was selected.");
+        exit();
+      }
+      i = int(COMx.toLowerCase().charAt(0) - 'a') + 1;
+    try{
+      String portName = Serial.list()[i-1];
+      if(debug) println(portName);
+      port = new Serial(this, portName, 9600);
+      port.bufferUntil(syncWord); // Loads buffer stopping at the syncWord from the Arduino
+    }
+      catch (Exception e) {
+        showMessageDialog(frame,"Device is not connected to the PC or does not exist.");
+        if (debug) println("Error: ", e);
+        exit();
+      }
+    }
+  }
+}
+
 // Read and sort serial data, the assign to global variables rollDegrees, pitchScaled, and yawScaled
 void serialEvent(Serial port) {
   serialBuffer = port.readBytesUntil(syncWord); // Loads buffer until syncWord is detected (syncWord is last byte)
@@ -98,13 +137,25 @@ void serialEvent(Serial port) {
     roll = serialBuffer[0]; // Raw roll data from serial port
     pitch = serialBuffer[1]; // Raw pitch data from serial port
     yaw = serialBuffer[2]; // Raw yaw data from serial port
+    println(serialBuffer);
   }
-  rollDegrees = -(int)( ( (float)roll )/255*360 ); // Scale roll data in degrees
-  pitchScaled = -(int)( ( (float)pitch )/255*height*4 ); // Scale pitch data w.r.t. image size
+  /*
+  lowPassRoll.input((float)roll);
+  roll = (int)lowPassRoll.output;
+  
+  lowPassPitch.input((float)pitch);
+  pitch = (int)lowPassPitch.output;
+  
+  lowPassYaw.input((float)yaw);
+  yaw = (int)lowPassYaw.output;
+  */
+  rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees  
+  pitchScaled = -(int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
   pitchDegrees = -(int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
-  yawScaled = (int)( ( (float)yaw )/255*width ); // Scale yaw data w.r.t. image size
-  yawDegrees = -(int)( ( ( (float)yaw )/255*360-90 ) ); // Scale yaw data in degrees
+  yawScaled = (int)( ( (float)yaw )/255 * width ); // Scale yaw data w.r.t. image size
+  yawDegrees = -(int)( ( ( (float)yaw )/255 * 360 + 90 ) ); // Scale yaw data in degrees
   redraw();
+  
   // For debugging
   //println(Serial.list());
   //println( "Raw Input: " + roll + " " + pitch + " " +yaw); // Uncomment for debugging
@@ -315,4 +366,30 @@ void pitchScale() {
       line(25, 25*i, -25, 25*i);
     }
   }
+}
+
+class LowPass {
+    ArrayList buffer;
+    int len;
+    float output;
+
+    LowPass(int len) {
+        this.len = len;
+        buffer = new ArrayList(len);
+        for(int i = 0; i < len; i++) {
+            buffer.add(new Float(0.0));
+        }
+    }
+
+    void input(float v) {
+        buffer.add(new Float(v));
+        buffer.remove(0);
+
+        float sum = 0;
+        for(int i=0; i<buffer.size(); i++) {
+                Float fv = (Float)buffer.get(i);
+                sum += fv.floatValue();
+        }
+        output = sum / buffer.size();
+    }
 }

@@ -1,10 +1,29 @@
+import processing.core.*; 
+import processing.data.*; 
+import processing.event.*; 
+import processing.opengl.*; 
+
+import processing.serial.*; 
+import static javax.swing.JOptionPane.*; 
+
+import java.util.HashMap; 
+import java.util.ArrayList; 
+import java.io.File; 
+import java.io.BufferedReader; 
+import java.io.PrintWriter; 
+import java.io.InputStream; 
+import java.io.OutputStream; 
+import java.io.IOException; 
+
+public class Processing_IMU_Cockpit_Demo_1280x800 extends PApplet {
+
 // Libraries to import
-import processing.serial.*; // Import the serial library for Processing
-import static javax.swing.JOptionPane.*;
+ // Import the serial library for Processing
+
 
 // Variable declarations
-int width = 1600; // Width of GUI window on monitor in pixels
-int height = 900; // Height of GUI window on monitor in pixels
+int width = 1280; // Width of GUI window on monitor in pixels
+int height = 800; // Height of GUI window on monitor in pixels
 byte serialBuffer[] = new byte[4];
 int roll, pitch, yaw = 0; // Raw roll data from serial port
 int rollDegrees = 0; // Roll data in degrees
@@ -12,8 +31,8 @@ int pitchScaled = 0; // Raw roll data from serial port
 int pitchDegrees = 0; // Pitch data in degrees
 int yawScaled = 0; // To store data from serial port, used to color background
 int yawDegrees = 0; // Yaw data in degrees
-float ArtificialHoizonMagnificationFactor=0.25; // scales artificial horizon
-float CompassMagnificationFactor=0.85; // scales compass
+float ArtificialHoizonMagnificationFactor=0.25f; // scales artificial horizon
+float CompassMagnificationFactor=0.85f; // scales compass
 float SpanAngle=120; // to draw circular scales
 int NumberOfScaleMajorDivisions; // to draw circular scales 
 int NumberOfScaleMinorDivisions; // to draw circular scales
@@ -31,7 +50,7 @@ PImage map; // Map object on dash
 LowPass lowPassRoll, lowPassPitch, lowPassYaw;
 
 // Initial setup
-void setup() {
+public void setup() {
   lowPassRoll = new LowPass(samples);
   lowPassPitch = new LowPass(samples);
   lowPassYaw = new LowPass(samples);
@@ -49,7 +68,7 @@ void setup() {
 }
 
 // Draw loop
-void draw() {
+public void draw() {
   // Moves the background scenery with IMU motion
   pushMatrix(); // Built-in function that saves the current position of the coordinate system
     translate(width/2, height/2); // Centers the background scenery
@@ -60,11 +79,11 @@ void draw() {
 
   // Dash
   pushMatrix(); // Built-in function that saves the current position of the coordinate system
-    translate(0, height/3.5);
+    translate(0, height/3.5f);
     scale((float)width/(float)cockpit.width);
     //Map
     pushMatrix();
-      translate(425, 11);
+      translate(588,66);//425,11 (1600x900) - 588,66 (1280x800)
       //tint(255, 127); // helps to center the map
       pushMatrix(); // Built-in function that saves the current position of the coordinate system
         translate(width/2, height/2);
@@ -76,7 +95,7 @@ void draw() {
     popMatrix(); // Restores the coordinate system to the way it was before the translate
     // Artificial Horizon
     pushMatrix();
-      translate(width/5.7, height/2.0); 
+      translate(width/4.15f, height/1.8f); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
       Horizon();
       pushMatrix();
         rotate(radians(rollDegrees));
@@ -97,7 +116,7 @@ void draw() {
     
 }
 
-void serialSetup() {
+public void serialSetup() {
   String COMx, COMlist = "";
   if(debug) printArray(Serial.list());
     int i = Serial.list().length;
@@ -106,7 +125,7 @@ void serialSetup() {
       // need to check which port the inst uses -
       // for now we'll just let the user decide
       for (int j = 0; j < i;) {
-        COMlist += char(j+'a') + " = " + Serial.list()[j];
+        COMlist += PApplet.parseChar(j+'a') + " = " + Serial.list()[j];
         if (++j < i) COMlist += ",  ";
       }
       COMx = showInputDialog("Which port is the demo connected to? (a,b,..):\n"+"Check the Device Manager if unsure!\n"+COMlist);
@@ -114,7 +133,7 @@ void serialSetup() {
         showMessageDialog(frame,"Port is not available!\nIt may be in use by another program or nothing was selected.");
         exit();
       }
-      i = int(COMx.toLowerCase().charAt(0) - 'a') + 1;
+      i = PApplet.parseInt(COMx.toLowerCase().charAt(0) - 'a') + 1;
     try{
       String portName = Serial.list()[i-1];
       if(debug) println(portName);
@@ -131,7 +150,7 @@ void serialSetup() {
 }
 
 // Read and sort serial data, the assign to global variables rollDegrees, pitchScaled, and yawScaled
-void serialEvent(Serial port) {
+public void serialEvent(Serial port) {
   serialBuffer = port.readBytesUntil(syncWord); // Loads buffer until syncWord is detected (syncWord is last byte)
   if (serialBuffer != null && serialBuffer.length == 4) { // Don't assign null data
     roll = serialBuffer[0]; // Raw roll data from serial port
@@ -163,7 +182,7 @@ void serialEvent(Serial port) {
   //println( "Frame Count: " + frameCount++); // Uncomment for debugging
 }
 
-void Horizon() {
+public void Horizon() {
   scale(ArtificialHoizonMagnificationFactor);
   noStroke();
   fill(0, 180, 255);
@@ -183,7 +202,7 @@ void Horizon() {
   rotate(PI/6);
 }
 
-void showYaw() {
+public void showYaw() {
   fill(50);
   noStroke();
   rect(20, 470, 440, 50);
@@ -194,7 +213,7 @@ void showYaw() {
   text("yaw:  "+yaw1+" Deg", 80, 477, 500, 60);
 }
 
-void Compass() {
+public void Compass() {
   translate(2*width/3, 0);
   scale(CompassMagnificationFactor);
   noFill();
@@ -238,7 +257,7 @@ void Compass() {
   CompassPointer();
 }
 
-void CompassPointer() {
+public void CompassPointer() {
   rotate(PI+radians(yawDegrees)); 
   stroke(0);
   strokeWeight(4);
@@ -254,7 +273,7 @@ void CompassPointer() {
   rotate(-PI-radians(yawDegrees));
 }
 
-void Plane() {
+public void Plane() {
   fill(0);
   strokeWeight(1);
   stroke(0, 255, 0);
@@ -263,7 +282,7 @@ void Plane() {
   rect(-110, 0, 140, 20);
 }
 
-void CircularScale() {
+public void CircularScale() {
   float GaugeWidth=800; 
   textSize(GaugeWidth/30);
   float StrokeWidth=1;
@@ -275,7 +294,7 @@ void CircularScale() {
   strokeWeight(2*StrokeWidth);
   stroke(255);
   float DivCloserPhasorLenght=GaugeWidth/2-GaugeWidth/9-StrokeWidth;
-  float DivDistalPhasorLenght=GaugeWidth/2-GaugeWidth/7.5-StrokeWidth;
+  float DivDistalPhasorLenght=GaugeWidth/2-GaugeWidth/7.5f-StrokeWidth;
   for (int Division=0;Division<NumberOfScaleMinorDivisions+1;Division++) {
     an=SpanAngle/2+Division*SpanAngle/NumberOfScaleMinorDivisions; 
     DivxPhasorCloser=DivCloserPhasorLenght*cos(radians(an));
@@ -285,7 +304,7 @@ void CircularScale() {
     line(DivxPhasorCloser, DivyPhasorCloser, DivxPhasorDistal, DivyPhasorDistal);
   }
   DivCloserPhasorLenght=GaugeWidth/2-GaugeWidth/10-StrokeWidth;
-  DivDistalPhasorLenght=GaugeWidth/2-GaugeWidth/7.4-StrokeWidth;
+  DivDistalPhasorLenght=GaugeWidth/2-GaugeWidth/7.4f-StrokeWidth;
   for (int Division=0;Division<NumberOfScaleMajorDivisions+1;Division++) {
     an=SpanAngle/2+Division*SpanAngle/NumberOfScaleMajorDivisions; 
     DivxPhasorCloser=DivCloserPhasorLenght*cos(radians(an));
@@ -307,7 +326,7 @@ void CircularScale() {
   }
 }
 
-void Axis() {
+public void Axis() {
   stroke(255, 0, 0);
   strokeWeight(3);
   line(-115, 0, 115, 0);
@@ -318,7 +337,7 @@ void Axis() {
   triangle(0, 285, -10, 255, 10, 255);
 }
 
-void showAngles() {
+public void showAngles() {
   textSize(30);
   fill(50);
   noStroke();
@@ -333,7 +352,7 @@ void showAngles() {
   text("roll:  "+rollDegrees+" Deg", 280, 411, 500, 60);
 }
 
-void Borders() {
+public void Borders() {
   noFill();
   stroke(0);
   strokeWeight(400);
@@ -346,7 +365,7 @@ void Borders() {
   rect(-4*width/5, 0, width, 2*height);
 }
 
-void pitchScale() { 
+public void pitchScale() { 
   stroke(255);
   fill(255);
   strokeWeight(3);
@@ -377,11 +396,11 @@ class LowPass {
         this.len = len;
         buffer = new ArrayList(len);
         for(int i = 0; i < len; i++) {
-            buffer.add(new Float(0.0));
+            buffer.add(new Float(0.0f));
         }
     }
 
-    void input(float v) {
+    public void input(float v) {
         buffer.add(new Float(v));
         buffer.remove(0);
 
@@ -392,4 +411,13 @@ class LowPass {
         }
         output = sum / buffer.size();
     }
+}
+  static public void main(String[] passedArgs) {
+    String[] appletArgs = new String[] { "Processing_IMU_Cockpit_Demo_1280x800" };
+    if (passedArgs != null) {
+      PApplet.main(concat(appletArgs, passedArgs));
+    } else {
+      PApplet.main(appletArgs);
+    }
+  }
 }
