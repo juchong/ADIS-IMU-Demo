@@ -102,7 +102,7 @@ void serialSetup() {
   if(debug) printArray(Serial.list());
     int i = Serial.list().length;
   if (i != 0) {
-    if (i >= 2) {
+    if (i >= 1) {
       // need to check which port the inst uses -
       // for now we'll just let the user decide
       for (int j = 0; j < i;) {
