@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Analog Devices, Inc.
-//  October 2015
-//  By: Daniel H. Tatum & Juan Chong
+//  May 19, 2016
+//  By: Daniel H. Tatum & Juan J. Chong
 //  Written for the TeensyDuino Platform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Arduino_TX_ADIS16480_ADF7242.ino
@@ -42,12 +42,7 @@ ADIS16480 IMU(10,8,6); // Instantiate ADIS16480 IMU(Chip Select, Data Ready, HW 
 void setup() {
   
   SPI.begin(); //Start SPI
-  
-  // Reminder in terminal that you're in DEBUG mode
-  #ifdef DEBUG
-    Serial.begin(9600); // Baud rate was set arbitrarily
-    Serial.println("**********DEBUG MODE**********");
-  #endif
+  Serial.begin(115200); //Start USB Serial
 
   // ADIS16480 IMU configuration
   IMU.configSPI();          // Begin the SPI transaction
@@ -81,19 +76,16 @@ void setup() {
   
   // Set interrupt pin on the MCU as an input and attach an interrupt
   pinMode(8, INPUT);
-  attachInterrupt(8, grabSensorData, RISING);
-
+  attachInterrupt(8, transmitData, RISING);
 }
 
+// Read IMU data, cast it, and transmit it.
 void grabSensorData() {
-  
   IMU.configSPI();  // Begin SPI transactions
   roll = (char)(IMU.regRead(ROLL_C23_OUT) >> 8);  // Read roll register and cast to char
   pitch = (char)(IMU.regRead(PITCH_C31_OUT) >> 8);  // Read pitch register and cast to char
   yaw = (char)(IMU.regRead(YAW_C32_OUT) >> 8);  // Read pitch register and cast to char
-
   // 0xFF is a reserved word used for data synchronization
-
   if(roll == 0xFF) { // 0xFF represents 360 degrees
     roll = 0; // This makes sense since 0 and 360 degrees are the same place
   }
@@ -103,10 +95,11 @@ void grabSensorData() {
   if(yaw == 0xFF) { // 0xFF represents 360 degrees
     yaw = 0; // This makes sense since 0 and 360 degrees are the same place
   }
-
   IMU.closeSPI(); // End SPI transaction
-  
-  // Transmit IMU data via ADF7242
+}
+
+// Transmit IMU data via ADF7242
+void sendWirelessSensorData() {
   Tx.configSPI(); // Begin SPI transaction
   Tx.dummySPIWrite(); // Dummy write to force SPI Mode change
   delay(1);
@@ -115,25 +108,26 @@ void grabSensorData() {
   Tx.regWrite(0x084, yaw); // Write yaw data to ADF7242 packet buffer
   Tx.transmit();  // Transmit packet buffer
   Tx.closeSPI();  // End SPI transaction
-  
+}
+
+// Transmit IMU data via USB Serial port.
+void sendSerialSensorData() {
+  Serial.write(roll); // Write roll data to serial connection
+  Serial.write(pitch); // Write pitch data to serial connection
+  Serial.write(yaw); // Write yaw data to serial connection
+  Serial.write(serialSyncWord); // Write synchronization word to serial connection
+}
+
+// Interrupt routine will grab data from the IMU and transmit it via the ADF7242 and SPI
+void transmitData() {
+  grabSensorData();
+  sendWirelessSensorData();
+  sendSerialSensorData();
 }
 
 void loop() {
   
-  // Program is entirely interrupt driven. Only debug statements are optionally compiled here.
-  
-  #ifdef DEBUG
-    Tx.dumpISB();
-    delay(100);
-  #endif
-
-  // Write IMU data to serial port
-  #ifdef DEBUG
-    Serial.write(roll); // Write roll data to serial connection
-    Serial.write(pitch); // Write pitch data to serial connection
-    Serial.write(yaw); // Write yaw data to serial connection
-    Serial.write(serialSyncWord); // Write synchronization word to serial connection
-  #endif
+  // Program is entirely interrupt driven. Nothing to do here!
   
 }
 
