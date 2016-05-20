@@ -40,8 +40,8 @@ void setup() {
   frameRate(30); // Frame rate to render
   // Using the first available port (might be different on your computer)
   //port = new Serial(this, Serial.list()[2], 9600); // Make sure this part agrees with the port listed in the PC and settings in Arduino Code
-  background = loadImage("boundless-horizon-4.jpg"); // Load background image
-  cockpit = loadImage("Cockpit.png"); // Load cockpit image
+  background = loadImage("Tractor_BG_1.jpg"); // Load background image
+  cockpit = loadImage("Dash.fw.png"); // Load cockpit image
   map = loadImage("Map.png"); // Load map image
   noLoop();
   rectMode(CENTER); // for instrumentation
@@ -62,37 +62,31 @@ void draw() {
   pushMatrix(); // Built-in function that saves the current position of the coordinate system
     translate(0, height/3.5);
     scale((float)width/(float)cockpit.width);
-    //Map
-    pushMatrix();
-      translate(425,11);//425,11 (1600x900) - 588,66 (1280x800)
-      //tint(255, 127); // helps to center the map
-      pushMatrix(); // Built-in function that saves the current position of the coordinate system
-        translate(width/2, height/2);
-        pushMatrix(); // Built-in function that saves the current position of the coordinate system
-          rotate(radians(yawDegrees));
-          image(map, -map.width/2, -map.height/2);
-        popMatrix(); // Restores the coordinate system to the way it was before the translate
-      popMatrix(); // Restores the coordinate system to the way it was before the translate
-    popMatrix(); // Restores the coordinate system to the way it was before the translate
-    // Artificial Horizon
+    
+    // Draw the rotating map on the screen
+    //Map();
+    
+    // Draw the gauges and artificial horizon on the screen
     pushMatrix();
       translate(width/5.7, height/2.0); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
-      Horizon();
+      scale(ArtificialHoizonMagnificationFactor);
+      //Horizon(); //Draws the artificial horizon background (brown/blue)
       pushMatrix();
         rotate(radians(rollDegrees));
-        pitchScale();
-        Axis();
+        //pitchScale(); //Draws the white scale on the artificial horizon
+        //Axis(); //Draws the red arrow on the artificial horizon
       popMatrix();
       //rotate(-radians(rollDegrees));
       pushMatrix();
-        Borders();
-        Plane();
-        showAngles();
-        Compass();
-        showYaw();
+        //Borders(); //Draws the gauge background (black) and cutouts for the original dashboard
+        centerCompassBorder(); 
+        //Plane(); //Draws the black bars that represent the plane on the artificial horizon
+        //showAngles(); //Draws the pitch/roll text outputs
+        Compass(); //Draws the compass in the center of the screen
+        //showYaw(); //Draws the yaw text output on the screen
       popMatrix();
     popMatrix();
-    image(cockpit, 0, 0); // Draws cockpit on top of background
+    image(cockpit, 0, 0); // Draws cockpit on top of background 
   popMatrix(); // Restores the coordinate system to the way it was before the translate
     
 }
@@ -139,16 +133,7 @@ void serialEvent(Serial port) {
     yaw = serialBuffer[2]; // Raw yaw data from serial port
     println(serialBuffer);
   }
-  /*
-  lowPassRoll.input((float)roll);
-  roll = (int)lowPassRoll.output;
-  
-  lowPassPitch.input((float)pitch);
-  pitch = (int)lowPassPitch.output;
-  
-  lowPassYaw.input((float)yaw);
-  yaw = (int)lowPassYaw.output;
-  */
+
   rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees  
   pitchScaled = -(int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
   pitchDegrees = -(int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
@@ -163,8 +148,8 @@ void serialEvent(Serial port) {
   //println( "Frame Count: " + frameCount++); // Uncomment for debugging
 }
 
+//Draws the artificial horizon background (brown/blue)
 void Horizon() {
-  scale(ArtificialHoizonMagnificationFactor);
   noStroke();
   fill(0, 180, 255);
   rect(0, -100, 900, 1000);
@@ -183,6 +168,7 @@ void Horizon() {
   rotate(PI/6);
 }
 
+//Draws the yaw text output on the screen
 void showYaw() {
   fill(50);
   noStroke();
@@ -194,8 +180,9 @@ void showYaw() {
   text("yaw:  "+yaw1+" Deg", 80, 477, 500, 60);
 }
 
+//Draws the compass in the center of the screen
 void Compass() {
-  translate(2*width/3, 0);
+  translate(1.265*width, 0.31*height);
   scale(CompassMagnificationFactor);
   noFill();
   stroke(100);
@@ -227,7 +214,7 @@ void Compass() {
   text("N", 0, -365, 100, 80);
   text("S", 0, 375, 100, 80);
   textSize(30);
-  text("COMPASS-01", 0, -130, 500, 80);
+  text("COMPASS", 0, -130, 500, 80);
   rotate(PI/4);
   textSize(40);
   text("NW", -370, 0, 100, 50);
@@ -238,6 +225,7 @@ void Compass() {
   CompassPointer();
 }
 
+//Draws the compass pointer arrow on the screen
 void CompassPointer() {
   rotate(PI+radians(yawDegrees)); 
   stroke(0);
@@ -254,6 +242,22 @@ void CompassPointer() {
   rotate(-PI-radians(yawDegrees));
 }
 
+//Draw the rotating map on the dashboard
+void Map(){
+  pushMatrix();
+    translate(425,11);//425,11 (1600x900) - 588,66 (1280x800)
+    ////tint(255, 127); // helps to center the map
+    pushMatrix(); // Built-in function that saves the current position of the coordinate system
+      translate(width/2, height/2);
+      pushMatrix(); // Built-in function that saves the current position of the coordinate system
+        rotate(radians(yawDegrees));
+        image(map, -map.width/2, -map.height/2);
+      popMatrix(); // Restores the coordinate system to the way it was before the translate
+    popMatrix(); // Restores the coordinate system to the way it was before the translate
+  popMatrix(); // Restores the coordinate system to the way it was before the translate
+}
+
+//Draws the black bars that represent the plane on the artificial horizon
 void Plane() {
   fill(0);
   strokeWeight(1);
@@ -307,6 +311,7 @@ void CircularScale() {
   }
 }
 
+//Draws the red arrow on the artificial horizon
 void Axis() {
   stroke(255, 0, 0);
   strokeWeight(3);
@@ -318,6 +323,7 @@ void Axis() {
   triangle(0, 285, -10, 255, 10, 255);
 }
 
+//Draws the pitch/roll text outputs
 void showAngles() {
   textSize(30);
   fill(50);
@@ -333,19 +339,31 @@ void showAngles() {
   text("roll:  "+rollDegrees+" Deg", 280, 411, 500, 60);
 }
 
+//Draws the gauge background (black) and cutouts for the original dashboard
 void Borders() {
   noFill();
   stroke(0);
+  //Draws the rectangles and elipses that comprise the gauge background
   strokeWeight(400);
   rect(0, 0, 1100, 1100);
   strokeWeight(200);
   ellipse(0, 0, 1000, 1000);
   fill(0);
   noStroke();
-  rect(4*width/5, 0, width, 2*height);
+  //Draws the right-most triangle for the gauges
+  rect(4*width/5, 0, width, 2*height);  
+  //Draws the left-most triangle for the gauges
   rect(-4*width/5, 0, width, 2*height);
 }
 
+//Draws the compass background in the center of the screen
+void centerCompassBorder() {
+  fill(0);
+  stroke(0);
+  rect(1.25*width, 0, 1.25*width, 1.5*height);
+}
+
+//Draws the pitch/roll text output on the screen
 void pitchScale() { 
   stroke(255);
   fill(255);
@@ -368,28 +386,4 @@ void pitchScale() {
   }
 }
 
-class LowPass {
-    ArrayList buffer;
-    int len;
-    float output;
 
-    LowPass(int len) {
-        this.len = len;
-        buffer = new ArrayList(len);
-        for(int i = 0; i < len; i++) {
-            buffer.add(new Float(0.0));
-        }
-    }
-
-    void input(float v) {
-        buffer.add(new Float(v));
-        buffer.remove(0);
-
-        float sum = 0;
-        for(int i=0; i<buffer.size(); i++) {
-                Float fv = (Float)buffer.get(i);
-                sum += fv.floatValue();
-        }
-        output = sum / buffer.size();
-    }
-}
