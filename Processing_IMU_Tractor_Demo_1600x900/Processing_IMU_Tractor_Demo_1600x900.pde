@@ -28,13 +28,8 @@ PImage cockpit; // Cockpit object in foreground
 PImage background; // Scenery object in background
 PImage map; // Map object on dash
 
-LowPass lowPassRoll, lowPassPitch, lowPassYaw;
-
 // Initial setup
 void setup() {
-  lowPassRoll = new LowPass(samples);
-  lowPassPitch = new LowPass(samples);
-  lowPassYaw = new LowPass(samples);
   size(width, height); // Size of GUI window on monitor in pixels
   smooth(); // Draws all geometry with smooth (anti-aliased) edges
   frameRate(30); // Frame rate to render
