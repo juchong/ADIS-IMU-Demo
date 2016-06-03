@@ -107,7 +107,7 @@ void serialSetup() {
     try{
       String portName = Serial.list()[i-1];
       if(debug) println(portName);
-      port = new Serial(this, portName, 9600);
+      port = new Serial(this, portName, 115200);
       port.bufferUntil(syncWord); // Loads buffer stopping at the syncWord from the Arduino
     }
       catch (Exception e) {
@@ -129,9 +129,9 @@ void serialEvent(Serial port) {
     println(serialBuffer);
   }
 
-  rollDegrees = (int)( ( (float)roll )/255*360 + 180 ); // Scale roll data in degrees  
-  pitchScaled = -(int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
-  pitchDegrees = -(int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
+  rollDegrees = (int)( ( (float)roll )/255*360 + 0 ); // Scale roll data in degrees  
+  pitchScaled = (int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
+  pitchDegrees = (int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
   yawScaled = (int)( ( (float)yaw )/255 * width ); // Scale yaw data w.r.t. image size
   yawDegrees = -(int)( ( ( (float)yaw )/255 * 360 + 90 ) ); // Scale yaw data in degrees
   redraw();
