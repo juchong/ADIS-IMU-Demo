@@ -15,14 +15,14 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class Processing_IMU_Cockpit_Demo_1600x900 extends PApplet {
+public class Processing_IMU_Cockpit_Demo_1440x900 extends PApplet {
 
 // Libraries to import
  // Import the serial library for Processing
 
 
 // Variable declarations
-int width = 1600; // Width of GUI window on monitor in pixels
+int width = 1440; // Width of GUI window on monitor in pixels
 int height = 900; // Height of GUI window on monitor in pixels
 byte serialBuffer[] = new byte[4];
 int roll, pitch, yaw = 0; // Raw roll data from serial port
@@ -83,7 +83,7 @@ public void draw() {
     scale((float)width/(float)cockpit.width);
     //Map
     pushMatrix();
-      translate(425,11);//425,11 (1600x900) - 588,66 (1280x800)
+      translate(506,11);//425,11 (1600x900) - 588,66 (1280x800) - 506,11 (1440x900)
       //tint(255, 127); // helps to center the map
       pushMatrix(); // Built-in function that saves the current position of the coordinate system
         translate(width/2, height/2);
@@ -95,7 +95,7 @@ public void draw() {
     popMatrix(); // Restores the coordinate system to the way it was before the translate
     // Artificial Horizon
     pushMatrix();
-      translate(width/5.7f, height/2.0f); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
+      translate(width/4.9f, height/2.0f); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8); (1440x900)(width/4.9, height/2.0);
       Horizon();
       pushMatrix();
         rotate(radians(rollDegrees));
@@ -121,7 +121,7 @@ public void serialSetup() {
   if(debug) printArray(Serial.list());
     int i = Serial.list().length;
   if (i != 0) {
-    if (i >= 2) {
+    if (i >= 1) {
       // need to check which port the inst uses -
       // for now we'll just let the user decide
       for (int j = 0; j < i;) {
@@ -413,7 +413,7 @@ class LowPass {
     }
 }
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "Processing_IMU_Cockpit_Demo_1600x900" };
+    String[] appletArgs = new String[] { "Processing_IMU_Cockpit_Demo_1440x900" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {
