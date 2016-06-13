@@ -15,15 +15,15 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class Processing_IMU_Tractor_Demo_1600x900 extends PApplet {
+public class Processing_IMU_Tractor_Demo_1280x800 extends PApplet {
 
 // Libraries to import
  // Import the serial library for Processing
 
 
 // Variable declarations
-int width = 1600; // Width of GUI window on monitor in pixels
-int height = 900; // Height of GUI window on monitor in pixels
+int width = 1280; // Width of GUI window on monitor in pixels
+int height = 800; // Height of GUI window on monitor in pixels
 byte serialBuffer[] = new byte[4];
 int roll, pitch, yaw = 0; // Raw roll data from serial port
 int rollDegrees = 0; // Roll data in degrees
@@ -82,7 +82,7 @@ public void draw() {
     
     // Draw the gauges and artificial horizon on the screen
     pushMatrix();
-      translate(width/5.7f, height/2.0f); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
+      translate(width/3.35f, height/1.74f); // (1600x900)(width/5.7, height/2.0); (1280x800)(width/4.15, height/1.8);
       scale(ArtificialHoizonMagnificationFactor);
       //Horizon(); //Draws the artificial horizon background (brown/blue)
       pushMatrix();
@@ -374,7 +374,7 @@ public void Borders() {
 public void centerCompassBorder() {
   fill(0);
   stroke(0);
-  rect(1.25f*width, 0, 1.25f*width, 1.5f*height);
+  rect(1.25f*width, 0, 1.25f*width, 2*height);
 }
 
 //Draws the pitch/roll text output on the screen
@@ -402,7 +402,7 @@ public void pitchScale() {
 
 
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "Processing_IMU_Tractor_Demo_1600x900" };
+    String[] appletArgs = new String[] { "Processing_IMU_Tractor_Demo_1280x800" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

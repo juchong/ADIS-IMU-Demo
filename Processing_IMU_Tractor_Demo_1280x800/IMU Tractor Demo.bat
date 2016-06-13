@@ -1,3 +1,3 @@
 @ECHO OFF
 
-cmd /c ""C:\Users\Public\Documents\IDE\processing-2.2.1\processing-java.exe" --present --force --sketch="C:\Users\Public\Documents\ADIS-IMU-Demo\Processing_IMU_Tractor_Demo_1600x900" --output="C:\Users\Public\Documents\ADIS-IMU-Demo\Processing_IMU_Tractor_Demo_1600x900\output""
+cmd /c ""C:\Users\Public\Documents\IDE\processing-2.2.1\processing-java.exe" --present --force --sketch="C:\Users\Public\Documents\ADIS-IMU-Demo\Processing_IMU_Tractor_Demo_1280x800" --output="C:\Users\Public\Documents\ADIS-IMU-Demo\Processing_IMU_Tractor_Demo_1280x800\output""
