@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Analog Devices, Inc.
-//  May 19, 2016
+//  April 17, 2017
 //  By: Daniel H. Tatum & Juan J. Chong
 //  Written for the TeensyDuino Platform
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,8 @@ unsigned char yaw = 0;
 unsigned char serialSyncWord = 0xFF; // Used to synchronize serial data received by GUI on PC
 
 ADF7242 Tx(7); // Instantiate ADF7242 Tx(Chip Select)
-ADIS16480 IMU(10,8,6); // Instantiate ADIS16480 IMU(Chip Select, Data Ready, HW Reset)
+ADIS16480 IMU(10,8,6); // Instantiate ADIS16480 IMU(Chip Select, Data Ready, HW Reset) 
+//10,2,6 when using the development platform
 
 void setup() {
   
@@ -45,9 +46,14 @@ void setup() {
   Serial.begin(115200); //Start USB Serial
 
   // ADIS16480 IMU configuration
+  delay(600);
   IMU.configSPI();          // Begin the SPI transaction
-  IMU.reset();              // Reset ADIS16480 during cold start up
-  IMU.tare();               // Tare the ADIS16480 during cold start up
+  IMU.dummySPIWrite();      // Dummy write to force SPI Mode change
+  IMU.reset(2000);          // Reset ADIS16480 during cold start up
+  IMU.regRead(PROD_ID);     // Read the product ID register
+  IMU.regWrite(FNCTIO_CTRL, 0x0D); // Enable data ready on DIO2 (0x0D)
+  IMU.regWrite(DEC_RATE, 0x51); // Set decimation to 30Hz
+  //IMU.tare();               // Tare the ADIS16480 during cold start up
   IMU.closeSPI();           // End the SPI transaction
 
   // ADF7242 RFIC configuration
@@ -75,16 +81,16 @@ void setup() {
   Tx.closeSPI();            // End the SPI transaction
   
   // Set interrupt pin on the MCU as an input and attach an interrupt
-  pinMode(8, INPUT);
-  attachInterrupt(8, transmitData, RISING);
+  attachInterrupt(8, transmitData, RISING); //Use GPIO 2 when using the development platform
 }
 
 // Read IMU data, cast it, and transmit it.
 void grabSensorData() {
-  IMU.configSPI();  // Begin SPI transactions
+  IMU.configSPI();          // Begin SPI transactions
+  IMU.dummySPIWrite();      // Dummy write to force SPI Mode change
   roll = (char)(IMU.regRead(ROLL_C23_OUT) >> 8);  // Read roll register and cast to char
   pitch = (char)(IMU.regRead(PITCH_C31_OUT) >> 8);  // Read pitch register and cast to char
-  yaw = (char)(IMU.regRead(YAW_C32_OUT) >> 8);  // Read pitch register and cast to char
+  yaw = (char)(IMU.regRead(YAW_C32_OUT) >> 8);  // Read yaw register and cast to char
   // 0xFF is a reserved word used for data synchronization
   if(roll == 0xFF) { // 0xFF represents 360 degrees
     roll = 0; // This makes sense since 0 and 360 degrees are the same place

@@ -32,7 +32,7 @@
 #define SPI_NOP 0x00 // No operation. Use for dummy writes.
 
 // User Register Memory Map from Table 9
-#define PAGE_ID 0x00 // 0x00, R/W, No, Page identifier, N/A
+#define PAGE_ID 0x0000 // 0x00, R/W, No, Page identifier, N/A
 // Name, {PAGE_ID, Address} // Default, R/W, Flash, Register Description, Format
 #define SEQ_CNT 0x0006 // N/A, R, No, Sequence counter, Table 68
 #define SYS_E_FLAG 0x0008 // 0x0000, R, No, Output - system error flags, Table 59
@@ -184,22 +184,22 @@ public:
   ~ADIS16480();
 
   // Performs hardware reset by sending pin 7 low for 2 seconds
-  void reset();
+  int reset(uint16_t ms);
 
   // Tares IMU
-  void tare();
+  int tare();
 
   // Sets SPI bit order, clock divider, and data mode
-  void configSPI();
+  int configSPI();
 
-  // Read current page
-  unsigned char pageRead();
+  // Write data to sensor
+  int regWrite(uint16_t regAddr, int16_t regData);
 
-  // Read register
-  unsigned int regRead(unsigned int regAddr);
+  // Read single register from sensor
+  uint16_t regRead(uint16_t regAddr);
 
   // Close SPI Transaction
-  void closeSPI();
+  int closeSPI();
 
   //Dummy write with no CS call to force the MCU into a different SPI mode
   void dummySPIWrite();
@@ -214,5 +214,12 @@ private:
   // Hardware reset pin
   int _RST;
 
+  // SPI stall time
+  int _stall = 10;
+
+  // Current page
+  int currentPage = 0x00;
+
 };
+
 #endif
