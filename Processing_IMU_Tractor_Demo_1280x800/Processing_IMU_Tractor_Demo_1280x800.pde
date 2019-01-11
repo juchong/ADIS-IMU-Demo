@@ -129,9 +129,9 @@ void serialEvent(Serial port) {
     println(serialBuffer);
   }
 
-  rollDegrees = (int)( ( (float)roll )/255*360 + 0 ); // Scale roll data in degrees  
-  pitchScaled = (int)( ( (float)pitch )/255 * height * 4 ); // Scale pitch data w.r.t. image size
-  pitchDegrees = (int)( ( (float)pitch )/255*360 ); // Scale pitch data in degrees
+  rollDegrees = (int)( ( ((float)roll )/255) * 360 * -1 ); // Scale roll data in degrees  
+  pitchScaled = (int)( ( (float)pitch )/255 * height * 4 * -1 ); // Scale pitch data w.r.t. image size
+  pitchDegrees = (int)( ( ( (float)pitch )/255 * 360 ) + 180); // Scale pitch data in degrees
   yawScaled = (int)( ( (float)yaw )/255 * width ); // Scale yaw data w.r.t. image size
   yawDegrees = -(int)( ( ( (float)yaw )/255 * 360 + 90 ) ); // Scale yaw data in degrees
   redraw();
